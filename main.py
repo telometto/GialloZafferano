@@ -31,7 +31,7 @@ def saveRecipe(linkRecipeToDownload):
     modelRecipe.ingredients = ingredients
     modelRecipe.description = description
     modelRecipe.category = category
-    modelRecipe.imageBase64 = imageBase64
+    modelRecipe.imageBase64 = imageBase64 or ""
 
     createFileJson(modelRecipe.toDictionary(), filePath)
 
@@ -120,7 +120,8 @@ def createFileJson(data, path):
 
 
 def downloadPage(linkToDownload):
-    response = requests.get(linkToDownload)
+    response = requests.get(linkToDownload, timeout=10)
+    response.raise_for_status()
     soup = BeautifulSoup(response.text, "lxml")
     return soup
 
@@ -129,9 +130,9 @@ def downloadAllRecipesFromGialloZafferano():
     totalPages = countTotalPages() + 1
     # for pageNumber in range(1,totalPages):
     for pageNumber in tqdm(range(1, totalPages), desc="pages…", ascii=False, ncols=75):
-        linkList = "https://www.giallozafferano.it/ricette-cat/page" + \
-            str(pageNumber)
-        response = requests.get(linkList)
+        linkList = f"https://www.giallozafferano.it/ricette-cat/page{pageNumber}"
+        response = requests.get(linkList, timeout=10)
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, "lxml")
         for tag in soup.find_all(attrs={"class": "gz-title"}):
             link = tag.a.get("href")
@@ -146,7 +147,8 @@ def downloadAllRecipesFromGialloZafferano():
 def countTotalPages():
     numberOfPages = 0
     linkList = "https://www.giallozafferano.it/ricette-cat"
-    response = requests.get(linkList)
+    response = requests.get(linkList, timeout=10)
+    response.raise_for_status()
     soup = BeautifulSoup(response.text, "lxml")
     for tag in soup.find_all(attrs={"class": "disabled total-pages"}):
         numberOfPages = int(tag.text)

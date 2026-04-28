@@ -2,9 +2,6 @@ import base64
 import json
 import os
 import re
-import string
-import urllib.request
-from string import digits
 
 import requests
 from bs4 import BeautifulSoup
@@ -40,10 +37,8 @@ def saveRecipe(linkRecipeToDownload):
 
 
 def findTitle(soup):
-    titleRecipe = ""
-    for title in soup.find_all(attrs={"class": "gz-title-recipe gz-mBottom2x"}):
-        titleRecipe = title.text
-    return titleRecipe
+    tag = soup.find(attrs={"class": "gz-title-recipe gz-mBottom2x"})
+    return tag.text if tag else ""
 
 
 def findIngredients(soup):
@@ -58,13 +53,11 @@ def findIngredients(soup):
 
 
 def findDescription(soup):
-    allDescription = ""
+    steps = []
     for tag in soup.find_all(attrs={"class": "gz-content-recipe-step"}):
-        removeNumbers = str.maketrans("", "", digits)
         if hasattr(tag.p, "text"):
-            description = tag.p.text.translate(removeNumbers)
-            allDescription = allDescription + description
-    return allDescription
+            steps.append(tag.p.text)
+    return "\n".join(steps)
 
 
 def findCategory(soup):
@@ -84,6 +77,9 @@ def findImage(soup):
             "div", attrs={"class": "gz-featured-image-video gz-type-photo"}
         )
 
+    if pictures is None:
+        return None
+
     imageSource = pictures.find("img")
 
     # Most of the times the url is in the `data-src` attribute
@@ -98,14 +94,14 @@ def findImage(soup):
     if imageURL is None:
         imageURL = imageSource.get("src")
 
-    imageToBase64 = str(base64.b64encode(requests.get(imageURL).content))
-    imageToBase64 = imageToBase64[2 : len(imageToBase64) - 1]
+    imageToBase64 = base64.b64encode(
+        requests.get(imageURL).content).decode("utf-8")
     return imageToBase64
 
 
 def calculateFilePath(title):
     compact_name = title.replace(" ", "_").lower()
-    return folderRecipes + "/" + compact_name + ".json"
+    return os.path.join(folderRecipes, compact_name + ".json")
 
 
 def createFileJson(data, path):
@@ -115,7 +111,7 @@ def createFileJson(data, path):
 
 def downloadPage(linkToDownload):
     response = requests.get(linkToDownload)
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.text, "lxml")
     return soup
 
 
@@ -123,9 +119,10 @@ def downloadAllRecipesFromGialloZafferano():
     totalPages = countTotalPages() + 1
     # for pageNumber in range(1,totalPages):
     for pageNumber in tqdm(range(1, totalPages), desc="pages…", ascii=False, ncols=75):
-        linkList = "https://www.giallozafferano.it/ricette-cat/page" + str(pageNumber)
+        linkList = "https://www.giallozafferano.it/ricette-cat/page" + \
+            str(pageNumber)
         response = requests.get(linkList)
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.text, "lxml")
         for tag in soup.find_all(attrs={"class": "gz-title"}):
             link = tag.a.get("href")
             saveRecipe(link)
@@ -140,7 +137,7 @@ def countTotalPages():
     numberOfPages = 0
     linkList = "https://www.giallozafferano.it/ricette-cat"
     response = requests.get(linkList)
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.text, "lxml")
     for tag in soup.find_all(attrs={"class": "disabled total-pages"}):
         numberOfPages = int(tag.text)
     return numberOfPages

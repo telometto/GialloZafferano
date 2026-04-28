@@ -166,6 +166,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     folderRecipes = args.output_dir
-    if not os.path.exists(folderRecipes):
-        os.makedirs(folderRecipes)
+    os.makedirs(folderRecipes, exist_ok=True)
     downloadAllRecipesFromGialloZafferano()

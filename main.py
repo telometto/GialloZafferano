@@ -1,3 +1,4 @@
+import argparse
 import base64
 import json
 import os
@@ -156,6 +157,15 @@ def countTotalPages():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Scrape recipes from Giallo Zafferano.")
+    parser.add_argument(
+        "--output-dir",
+        default=folderRecipes,
+        help=f"Directory to store scraped recipes (default: {folderRecipes})",
+    )
+    args = parser.parse_args()
+    folderRecipes = args.output_dir
     if not os.path.exists(folderRecipes):
         os.makedirs(folderRecipes)
     downloadAllRecipesFromGialloZafferano()

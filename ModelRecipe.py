@@ -1,9 +1,10 @@
 class ModelRecipe:
-    imageBase64 = ""
-    title = ""
-    category = ""
-    description = ""
-    ingredients = []
+    def __init__(self):
+        self.imageBase64 = ""
+        self.title = ""
+        self.category = ""
+        self.description = ""
+        self.ingredients = []
 
     def toDictionary(self):
         recipe = {

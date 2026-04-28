@@ -1,2 +1,4 @@
 Recipes/
 __pycache__/
+.direnv/
+.venv/

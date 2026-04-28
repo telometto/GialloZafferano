@@ -82,6 +82,9 @@ def findImage(soup):
 
     imageSource = pictures.find("img")
 
+    if imageSource is None:
+        return None
+
     # Most of the times the url is in the `data-src` attribute
     imageURL = imageSource.get("data-src")
 
@@ -94,9 +97,16 @@ def findImage(soup):
     if imageURL is None:
         imageURL = imageSource.get("src")
 
-    imageToBase64 = base64.b64encode(
-        requests.get(imageURL).content).decode("utf-8")
-    return imageToBase64
+    if imageURL is None:
+        return None
+
+    try:
+        response = requests.get(imageURL, timeout=10)
+        response.raise_for_status()
+        imageToBase64 = base64.b64encode(response.content).decode("utf-8")
+        return imageToBase64
+    except requests.RequestException:
+        return None
 
 
 def calculateFilePath(title):
